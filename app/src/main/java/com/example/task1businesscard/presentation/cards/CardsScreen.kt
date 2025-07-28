@@ -1,8 +1,10 @@
 package com.example.task1businesscard.presentation.cards
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -18,8 +20,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,13 +44,44 @@ fun CardsScreen() {
     var logoShape by remember { mutableStateOf(0) } // 0 = rectangle, 1 = circle
     var expanded by remember { mutableStateOf(false) }
 
+    // Card Color
     val presetColors = listOf(
         Color.White,
         Color(0xFF2196F3), // Blue
         Color(0xFF4CAF50), // Green
         Color(0xFF9C27B0), // Purple
         Color(0xFFFF9800), // Orange
-        Color(0xFF6650a4), // Orange
+        Color(0xFF6650a4), // Deep Purple
+        Color(0xFFE91E63), // Pink
+        Color(0xFF009688), // Teal
+        Color(0xFFFF5722), // Deep Orange
+        Color(0xFF607D8B), // Blue Grey
+        Color(0xFF795548), // Brown
+        Color(0xFF3F51B5), // Indigo
+        Color(0xFF00BCD4), // Cyan
+        Color(0xFF8BC34A), // Light Green
+        Color(0xFFFFC107), // Amber
+        Color(0xFF9E9E9E), // Grey
+        Color(0xFF000000), // Black
+    )
+    // Add these text color options at the top of your file
+    val textColors = listOf(
+        Color.Black,
+        Color.White,
+        Color(0xFF2196F3), // Blue
+        Color(0xFF00008B), // Dark Blue
+        Color(0xFF4B0082), // Indigo
+        Color(0xFF800000), // Maroon
+        Color(0xFF8B0000), // Dark Red
+        Color(0xFF006400), // Dark Green
+        Color(0xFF808000), // Olive
+        Color(0xFF708090), // Slate Gray
+        Color(0xFF2F4F4F), // Dark Slate Gray
+        Color(0xFFFF4500), // Orange Red
+        Color(0xFFDAA520), // Golden Rod
+        Color(0xFF800080), // Purple
+        Color(0xFFA52A2A), // Brown
+        Color(0xFFDC143C), // Crimson
     )
 
     val systemFonts = listOf(
@@ -56,23 +94,25 @@ fun CardsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            //.verticalScroll(rememberScrollState())
             .padding(16.dp)
+
     ) {
+
         // Template selector
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             listOf("Professional", "Modern", "Minimal").forEachIndexed { index, label ->
-                Button(
+                FilterChip(
+                    selected = (index + 1) == selectedTemplate,
                     onClick = { selectedTemplate = index + 1 },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (index + 1 == selectedTemplate) Color.Yellow else Color.Gray
+                    label = { Text(label) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = Color.White
                     )
-                ) {
-                    Text(label)
-                }
+                )
             }
         }
 
@@ -83,25 +123,37 @@ fun CardsScreen() {
             columns = GridCells.Fixed(2),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-                .weight(1f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp) // Fixed height for better layout
         ) {
-            // Card Color
+
+
+
+          // Card Color
             item {
                 CustomizationCard("Card Color") {
-                    Row {
+                    val scrollState = rememberScrollState()
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(scrollState),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         presetColors.forEach { color ->
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .background(color)
+                                    .size(40.dp) // Slightly larger for better touch target
+                                    .background(color, CircleShape) // Circular color swatches
                                     .border(
                                         2.dp,
-                                        if (color == selectedColor) Color.Black else Color.Transparent
+                                        if (color == selectedColor) Color.Black else Color.Transparent,
+                                        CircleShape
                                     )
                                     .clickable { selectedColor = color }
+                                    .padding(4.dp) // Inner padding for the border
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
                         }
                     }
                 }
@@ -110,15 +162,23 @@ fun CardsScreen() {
             // Text Color
             item {
                 CustomizationCard("Text Color") {
-                    Row {
-                        listOf(Color.Black, Color.White, Color(0xFF2196F3)).forEach { color ->
+                    val scrollState = rememberScrollState()
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(scrollState),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        textColors.forEach { color ->
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .background(color)
+                                    .size(40.dp)
+                                    .background(color, CircleShape)
                                     .border(
                                         2.dp,
-                                        if (color == selectedTextColor) Color.Black else Color.Transparent
+                                        if (color == selectedTextColor) Color.Black else Color.Transparent,
+                                        CircleShape
                                     )
                                     .clickable { selectedTextColor = color }
                             )
@@ -126,9 +186,7 @@ fun CardsScreen() {
                         }
                     }
                 }
-            }
-
-            // Font Selection
+            }            // Font Selection
             item {
                 CustomizationCard("Font") {
                     Box {
@@ -136,7 +194,7 @@ fun CardsScreen() {
                             text = systemFonts.first { it.second == selectedFont }.first,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.LightGray)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                 .padding(8.dp)
                                 .clickable { expanded = true }
                         )
@@ -168,7 +226,7 @@ fun CardsScreen() {
                         IconButton(
                             onClick = { textAlignment = TextAlign.Start },
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (textAlignment == TextAlign.Start) Color.LightGray else Color.White
+                                containerColor = if (textAlignment == TextAlign.Start) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Icon(Icons.Default.FormatAlignLeft, "Left")
@@ -176,7 +234,7 @@ fun CardsScreen() {
                         IconButton(
                             onClick = { textAlignment = TextAlign.Center },
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (textAlignment == TextAlign.Center) Color.LightGray else Color.White
+                                containerColor = if (textAlignment == TextAlign.Center) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Icon(Icons.Default.FormatAlignCenter, "Center")
@@ -184,7 +242,7 @@ fun CardsScreen() {
                         IconButton(
                             onClick = { textAlignment = TextAlign.End },
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = if (textAlignment == TextAlign.End) Color.LightGray else Color.White
+                                containerColor = if (textAlignment == TextAlign.End) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Icon(Icons.Default.FormatAlignRight, "Right")
@@ -196,84 +254,116 @@ fun CardsScreen() {
             // Logo Shape
             item {
                 CustomizationCard("Logo Shape") {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Button(
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ){
+                        FilterChip(
+                            selected = logoShape == 0,
                             onClick = { logoShape = 0 },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (logoShape == 0) Color.LightGray else Color.White
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Rectangle")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
+                            label = { Text("Rectangle") },
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
+                        FilterChip(
+                            selected = logoShape == 1,
                             onClick = { logoShape = 1 },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (logoShape == 1) Color.LightGray else Color.White
-                            ),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Circle")
-                        }
+                            label = { Text("Circle") },
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
                     }
                 }
             }
+
+
 
             // Orientation
             item {
                 CustomizationCard("Orientation") {
-                    Button(
-                        onClick = { isPortrait = !isPortrait },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isPortrait) Color.LightGray else Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(if (isPortrait) "Portrait" else "Landscape")
+                        FilterChip(
+                            selected = isPortrait,
+                            onClick = { isPortrait = true },
+                            label = { Text("Portrait") },
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
+
+                        FilterChip(
+                            selected = !isPortrait,
+                            onClick = { isPortrait = false },
+                            label = { Text("Landscape") },
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
                     }
                 }
             }
+
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Card Preview
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-               //.padding(bottom = 32.dp)
-                .weight(1f, fill = false)  // This makes the box take minimum required height
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
+            val cardModifier = Modifier
+                .then(
+                    if (isPortrait) {
+                        Modifier
+                            .fillMaxWidth(0.95f)
+                            .aspectRatio(1.3f)
+                    } else {
+                        Modifier
+                            .fillMaxHeight(0.9f) // Smaller height in landscape
+                            .aspectRatio(1.3f) // keep same ratio, but rotate
+                            .graphicsLayer {
+                                rotationZ = 90f
+                                transformOrigin = TransformOrigin(0.5f, 0.5f)
+                            }
+
+                    }
+                )
+                .then(
+                    if (selectedTemplate != 1) {
+                        Modifier.clip(RoundedCornerShape(16.dp))
+                    } else Modifier
+                )
+
+
             when (selectedTemplate) {
                 1 -> ProfessionalCard(
                     backgroundColor = selectedColor,
                     textColor = selectedTextColor,
                     fontFamily = selectedFont,
                     textAlignment = textAlignment,
-                    isPortrait = isPortrait,
-                    logoShape = logoShape
+                    logoShape = logoShape,
+                    modifier = cardModifier
                 )
                 2 -> ModernCard(
                     backgroundColor = selectedColor,
                     textColor = selectedTextColor,
                     fontFamily = selectedFont,
                     textAlignment = textAlignment,
-                    isPortrait = isPortrait,
-                    logoShape = logoShape
+                    logoShape = logoShape,
+                    modifier = cardModifier
                 )
                 3 -> MinimalCard(
                     backgroundColor = selectedColor,
                     textColor = selectedTextColor,
                     fontFamily = selectedFont,
                     textAlignment = textAlignment,
-                    isPortrait = isPortrait
+                    modifier = cardModifier
                 )
             }
         }
+
     }
 }
 
@@ -284,7 +374,7 @@ fun CustomizationCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(8.dp)
@@ -299,6 +389,8 @@ fun CustomizationCard(
     }
 }
 
+
+
 @Composable
 fun ProfessionalCard(
     modifier: Modifier = Modifier,
@@ -306,31 +398,28 @@ fun ProfessionalCard(
     textColor: Color,
     fontFamily: FontFamily,
     textAlignment: TextAlign,
-    isPortrait: Boolean,
     logoShape: Int
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(if (isPortrait) 1.8f else 0.8f)
-            .background(backgroundColor)
-            .border(1.dp, Color.Gray)
+        modifier = modifier
+            .background(backgroundColor) // Clean background
             .padding(16.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
         ) {
             // Logo placeholder
             Box(
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(50.dp)
                     .background(
-                        color = Color.Blue,
-                        shape = if (logoShape == 0) RoundedCornerShape(8.dp) else CircleShape
+                        color = textColor.copy(alpha = 0.2f),
+                        shape = if (logoShape == 0) RectangleShape else CircleShape // ✅ Rectangle with no corner radius
                     )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Name
             Text(
@@ -351,47 +440,50 @@ fun ProfessionalCard(
                 textAlign = textAlignment
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Contact info
-            Text(
-                text = "john.doe@example.com",
-                fontSize = 14.sp,
-                color = textColor,
-                fontFamily = fontFamily,
-                textAlign = textAlignment
-            )
-            Text(
-                text = "+1 234 567 890",
-                fontSize = 14.sp,
-                color = textColor,
-                fontFamily = fontFamily,
-                textAlign = textAlignment
-            )
-            Text(
-                text = "www.example.com",
-                fontSize = 14.sp,
-                color = textColor,
-                fontFamily = fontFamily,
-                textAlign = textAlignment
-            )
+            Column {
+                Text(
+                    text = "john.doe@example.com",
+                    fontSize = 14.sp,
+                    color = textColor,
+                    fontFamily = fontFamily,
+                    textAlign = textAlignment
+                )
+                Text(
+                    text = "+1 234 567 890",
+                    fontSize = 14.sp,
+                    color = textColor,
+                    fontFamily = fontFamily,
+                    textAlign = textAlignment
+                )
+                Text(
+                    text = "www.example.com",
+                    fontSize = 14.sp,
+                    color = textColor,
+                    fontFamily = fontFamily,
+                    textAlign = textAlignment
+                )
+            }
         }
     }
 }
 
+
+
+
 @Composable
 fun ModernCard(
+    modifier: Modifier = Modifier,
     backgroundColor: Color,
     textColor: Color,
     fontFamily: FontFamily,
     textAlignment: TextAlign,
-    isPortrait: Boolean,
     logoShape: Int
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(if (isPortrait) 1.8f else 0.8f)
+        modifier = modifier
             .background(
                 brush = Brush.horizontalGradient(
                     colors = listOf(backgroundColor, backgroundColor.copy(alpha = 0.7f))
@@ -466,16 +558,14 @@ fun ModernCard(
 
 @Composable
 fun MinimalCard(
+    modifier: Modifier = Modifier,
     backgroundColor: Color,
     textColor: Color,
     fontFamily: FontFamily,
-    textAlignment: TextAlign,
-    isPortrait: Boolean
+    textAlignment: TextAlign
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(if (isPortrait) 1.8f else 0.8f)
+        modifier = modifier
             .background(backgroundColor)
             .padding(16.dp)
     ) {
@@ -531,4 +621,5 @@ fun MinimalCard(
             )
         }
     }
+
 }
